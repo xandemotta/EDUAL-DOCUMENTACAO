@@ -1,7 +1,7 @@
 # Documentacao de Consumo da API
 
 ## Base URL
-- Local (PM2): `http://localhost:3101`
+- Local (PM2): `http://mmsistemas.ddns.net:3101`
 
 ## Formato padrao
 - `Content-Type`: `application/json`
