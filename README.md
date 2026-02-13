@@ -1,15 +1,21 @@
 # Documentacao de Consumo da API
 
 ## Base URL
-- Local (PM2): `http://mmsistemas.ddns.net:3101`
+- `http://mmsistemas.ddns.net:3101`
 
 ## Formato padrao
 - `Content-Type`: `application/json`
-- Autenticacao: nao possui
+- `Accept`: `application/json`
+- Autenticacao: `Bearer Token` obrigatorio em endpoints de negocio
+
+## Fluxo de autenticacao
+1. Consumidor chama `POST /auth/login` com `cnpjCliente`, `usuario` e `senha`.
+2. API retorna `tokenAcesso`.
+3. Consumidor envia `Authorization: Bearer <tokenAcesso>` em todas as chamadas de negocio.
 
 ## Healthcheck
 ### `GET /`
-Retorna status da API.
+Sem autenticacao.
 
 Exemplo de resposta:
 ```json
@@ -18,145 +24,171 @@ Exemplo de resposta:
 }
 ```
 
-## Endpoint de Produto
-### `POST /produto`
-Recebe dados de produto, grava no banco e retorna o JSON normalizado.
+## Login
+### `POST /auth/login`
+Sem token.
 
-Campos obrigatorios:
-- `NOMPRO` ou `nomeProduto` (string)
-- `DESCRICAO` ou `descricaoProduto` (string)
-- `NOMUN` ou `unidadeMedida` (string)
+Campos:
 
-Campos opcionais:
-- `BARPRO` ou `gtin` (string)
-- `CODCLI` ou `skuCliente` (string)
-- `NONCM` ou `ncm` (string)
-- `ALT` ou `altura` (numero >= 0)
-- `LARG` ou `largura` (numero >= 0)
-- `PROF` ou `profundidade` (numero >= 0)
-- `PESOLIQ` ou `pesoLiquido` (numero >= 0)
-- `PESOBR` ou `pesoBruto` (numero >= 0)
-- `M2` ou `m2` (numero >= 0)
-- `M3` ou `m3` (numero >= 0)
-
-Regra importante:
-- Nao enviar os dois nomes do mesmo campo (exemplo: `NOMPRO` e `nomeProduto` juntos).
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `cnpjCliente` | string | Sim | CNPJ do cliente | Nao vazio |
+| `usuario` ou `usuário` | string | Sim | Usuario de acesso | Nao vazio |
+| `senha` | string | Sim | Senha de acesso | Nao vazio |
 
 Exemplo de requisicao:
 ```json
 {
-  "nomeProduto": "Camisa Dry Fit",
-  "descricaoProduto": "Camisa esportiva manga curta",
-  "unidadeMedida": "UN",
-  "pesoBruto": 0.3,
-  "gtin": "7891234567890",
-  "altura": 2,
-  "largura": 30,
-  "profundidade": 25
+  "cnpjCliente": "12345678000190",
+  "usuario": "integrador",
+  "senha": "senhaForte@123"
 }
 ```
 
 Exemplo de resposta:
 ```json
 {
-  "NOMPRO": "Camisa Dry Fit",
-  "DESCRICAO": "Camisa esportiva manga curta",
-  "NOMUN": "UN",
-  "BARPRO": "7891234567890",
-  "ALT": 2,
-  "LARG": 30,
-  "PROF": 25,
-  "PESOBR": 0.3
+  "tokenAcesso": "<JWT>",
+  "tipo": "Bearer",
+  "expiraEm": "8h"
 }
 ```
 
-## Endpoint de Entrada de Nota
+## Endpoint de Produto (protegido)
+### `POST /produto`
+Obrigatorio header:
+- `Authorization: Bearer <tokenAcesso>`
+
+Campos:
+
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `NOMPRO` ou `nomeProduto` | string | Sim | Nome do produto | Nao vazio |
+| `DESCRICAO` ou `descricaoProduto` | string | Sim | Descricao do produto | Nao vazio |
+| `NOMUN` ou `unidadeMedida` | string | Sim | Unidade de medida | Nao vazio |
+| `BARPRO` ou `gtin` | string | Nao | Codigo de barras | Se enviado, nao vazio |
+| `CODCLI` ou `skuCliente` | string | Nao | SKU do cliente | Se enviado, nao vazio |
+| `NONCM` ou `ncm` | string | Nao | NCM do produto | Se enviado, nao vazio |
+| `ALT` ou `altura` | number | Nao | Altura | `>= 0` |
+| `LARG` ou `largura` | number | Nao | Largura | `>= 0` |
+| `PROF` ou `profundidade` | number | Nao | Profundidade | `>= 0` |
+| `PESOLIQ` ou `pesoLiquido` | number | Nao | Peso liquido | `>= 0` |
+| `PESOBR` ou `pesoBruto` | number | Nao | Peso bruto | `>= 0` |
+| `M2` ou `m2` | number | Nao | Area em m2 | `>= 0` |
+| `M3` ou `m3` | number | Nao | Cubagem em m3 | `>= 0` |
+
+Regra importante:
+- Nao enviar os dois nomes do mesmo campo (exemplo: `NOMPRO` e `nomeProduto` juntos).
+
+Exemplo de resposta:
+```json
+{
+  "NOMPRO": "Camisa Dry Fit",
+  "DESCRICAO": "Camisa esportiva manga curta",
+  "NOMUN": "UN"
+}
+```
+
+## Endpoint de Entrada de Nota (protegido)
 ### `POST /tarefa-entrada`
-Recebe uma lista de notas, grava cabecalho e itens no banco e retorna JSON normalizado.
+Obrigatorio header:
+- `Authorization: Bearer <tokenAcesso>`
 
-Estrutura obrigatoria:
-- `notas` (array com pelo menos 1 item)
+Campos da requisicao:
 
-Campos obrigatorios por nota:
-- `identificacao.numeroNfe` (string)
-- `identificacao.serie` (string)
-- `identificacao.chaveNfe` (string)
-- `identificacao.cnpjcliente` (string)
-- `identificacao.nomecliente` (string)
-- `identificacao.tipomovimentacao` (string)
-- `identificacao.destinatario.cnpj` (string)
-- `identificacao.destinatario.nome` (string)
-- `identificacao.destinatario.ie` (string)
-- `identificacao.destinatario.endereco` (string)
-- `identificacao.destinatario.ibgecidade` (numero >= 0)
-- `identificacao.destinatario.cep` (numero >= 0)
-- `itens` (array com pelo menos 1 item)
-- `totais.valorProdutos` (numero >= 0)
-- `totais.pesoBrutoTotal` (numero >= 0)
-- `totais.pesoLiquidoTotal` (numero >= 0)
-- `xml.nfe` (string)
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `notas` | array | Sim | Lista de notas | Minimo 1 item |
 
-Campos obrigatorios por item:
-- `skuProduto` (string)
-- `descricaoProduto` (string)
-- `quantidade` (numero >= 0)
-- `valorUnitario` (numero >= 0)
-- `valorTotal` (numero >= 0)
-- `unidadeMedida` (string)
-- `pesoBruto` (numero >= 0)
+Campos por nota (`notas[]`):
 
-Campos opcionais por item:
-- `gtin` (string)
-- `pesoLiquido` (numero >= 0)
-- `dimensoes.largura` (numero >= 0)
-- `dimensoes.altura` (numero >= 0)
-- `dimensoes.profundidade` (numero >= 0)
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `identificacao.numeroNfe` | string | Sim | Numero da NF-e | Nao vazio |
+| `identificacao.serie` | string | Sim | Serie da NF-e | Nao vazio |
+| `identificacao.chaveNfe` | string | Sim | Chave da NF-e | Nao vazio |
+| `identificacao.cnpjcliente` | string | Sim | CNPJ do cliente | Nao vazio |
+| `identificacao.nomecliente` | string | Sim | Nome do cliente | Nao vazio |
+| `identificacao.tipomovimentacao` | string | Sim | Tipo de movimentacao | Nao vazio |
+| `identificacao.destinatario.cnpj` | string | Sim | CNPJ do destinatario | Nao vazio |
+| `identificacao.destinatario.nome` | string | Sim | Nome do destinatario | Nao vazio |
+| `identificacao.destinatario.ie` | string | Sim | IE do destinatario | Nao vazio |
+| `identificacao.destinatario.endereco` | string | Sim | Endereco do destinatario | Nao vazio |
+| `identificacao.destinatario.ibgecidade` | number | Sim | Codigo IBGE da cidade | `>= 0` |
+| `identificacao.destinatario.cep` | number | Sim | CEP do destinatario | `>= 0` |
+| `itens` | array | Sim | Itens da nota | Minimo 1 item |
+| `totais.valorProdutos` | number | Sim | Soma dos produtos | `>= 0` |
+| `totais.pesoBrutoTotal` | number | Sim | Peso bruto total | `>= 0` |
+| `totais.pesoLiquidoTotal` | number | Sim | Peso liquido total | `>= 0` |
+| `xml.nfe` | string | Sim | XML da NF-e | Nao vazio |
+
+Campos por item (`notas[].itens[]`):
+
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `skuProduto` | string | Sim | SKU do produto | Nao vazio |
+| `descricaoProduto` | string | Sim | Descricao do produto | Nao vazio |
+| `quantidade` | number | Sim | Quantidade | `>= 0` |
+| `valorUnitario` | number | Sim | Valor unitario | `>= 0` |
+| `valorTotal` | number | Sim | Valor total | `>= 0` |
+| `unidadeMedida` | string | Sim | Unidade de medida | Nao vazio |
+| `pesoBruto` | number | Sim | Peso bruto do item | `>= 0` |
+| `gtin` | string | Nao | Codigo de barras | Se enviado, nao vazio |
+| `pesoLiquido` | number | Nao | Peso liquido do item | `>= 0` |
+| `dimensoes.largura` | number | Nao | Largura do item | `>= 0` |
+| `dimensoes.altura` | number | Nao | Altura do item | `>= 0` |
+| `dimensoes.profundidade` | number | Nao | Profundidade do item | `>= 0` |
+
+## Endpoint de Pedidos (protegido)
+### `POST /pedidos`
+Obrigatorio header:
+- `Authorization: Bearer <tokenAcesso>`
+
+Campos:
+
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `pedidos` | array | Sim | Lista de pedidos | Minimo 1 item |
+| `pedidos[].identificacao.numeropedido` | string | Sim | Numero do pedido | Nao vazio |
+| `pedidos[].identificacao.cnpjcliente` | string | Sim | CNPJ do cliente | Nao vazio |
+| `pedidos[].identificacao.nomecliente` | string | Sim | Nome do cliente | Nao vazio |
+| `pedidos[].identificacao.tipomovimentacao` | string | Sim | Tipo de movimentacao | Deve ser `SAIDA` |
+| `pedidos[].identificacao.destinatario.cnpj` | string | Sim | CNPJ do destinatario | Nao vazio |
+| `pedidos[].identificacao.destinatario.nome` | string | Sim | Nome do destinatario | Nao vazio |
+| `pedidos[].itens` | array | Sim | Itens do pedido | Minimo 1 item |
+| `pedidos[].itens[].skuProduto` | string | Sim | SKU do item | Nao vazio |
+| `pedidos[].itens[].quantidade` | number | Sim | Quantidade do item | `> 0` |
+| `pedidos[].itens[].valorUnitario` | number | Sim | Valor unitario | `>= 0` |
+| `pedidos[].itens[].valorTotal` | number | Sim | Valor total | `>= 0` |
+| `pedidos[].itens[].unidadeMedida` | string | Sim | Unidade de medida | Nao vazio |
+| `pedidos[].totais.valorProdutos` | number | Sim | Soma dos produtos | `>= 0` |
 
 Exemplo de requisicao:
 ```json
 {
-  "notas": [
+  "pedidos": [
     {
       "identificacao": {
-        "numeroNfe": "12345",
-        "serie": "1",
-        "chaveNfe": "41260100000000000000550010000123451000012345",
+        "numeropedido": "12345",
         "cnpjcliente": "12345678000190",
-        "nomecliente": "Cliente Exemplo LTDA",
-        "tipomovimentacao": "ENTRADA",
+        "nomecliente": "CLIENTE EXEMPLO LTDA",
+        "tipomovimentacao": "SAIDA",
         "destinatario": {
           "cnpj": "12345678000190",
-          "nome": "Cliente Exemplo LTDA",
-          "ie": "1234567890",
-          "endereco": "Rua Exemplo, 100",
-          "ibgecidade": 4106902,
-          "cep": 80000000
+          "nome": "DESTINATARIO EXEMPLO LTDA"
         }
       },
       "itens": [
         {
           "skuProduto": "SKU-001",
-          "descricaoProduto": "Produto Exemplo",
-          "quantidade": 2,
-          "valorUnitario": 50,
-          "valorTotal": 100,
-          "unidadeMedida": "UN",
-          "pesoBruto": 1.2,
-          "gtin": "7891234567890",
-          "dimensoes": {
-            "largura": 10,
-            "altura": 20,
-            "profundidade": 5
-          }
+          "quantidade": 10,
+          "valorUnitario": 25.5,
+          "valorTotal": 255,
+          "unidadeMedida": "UN"
         }
       ],
       "totais": {
-        "valorProdutos": 100,
-        "pesoBrutoTotal": 1.2,
-        "pesoLiquidoTotal": 1
-      },
-      "xml": {
-        "nfe": "<xml>...</xml>"
+        "valorProdutos": 255
       }
     }
   ]
@@ -166,46 +198,205 @@ Exemplo de requisicao:
 Exemplo de resposta:
 ```json
 {
-  "TABPRETAREFA": {
-    "CGCCLI": "12345678000190",
-    "NOMCLI": "Cliente Exemplo LTDA",
-    "NOCID_IBGE": 4106902,
-    "CEPCLI": 80000000,
-    "ENDCLI": "Rua Exemplo, 100",
-    "REFCLI": "12345",
-    "USUARIO": "SISTEMA",
-    "STATUS": "PENDENTE"
+  "success": true,
+  "message": "Pedidos registrados",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "12345",
+        "status": "OK",
+        "protocoloPedido": "PED-1700000000000-1"
+      }
+    ]
   },
-  "TABPRETAREFA_ITEM": [
+  "error": null
+}
+```
+
+## Endpoint de Cancelamento (protegido)
+### `POST /pedidos/cancelamento`
+Obrigatorio header:
+- `Authorization: Bearer <tokenAcesso>`
+
+Campos:
+
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `pedido` | array | Sim | Lista de pedidos | Minimo 1 item |
+| `pedido[].identificacao.numeropedido` | string | Sim | Numero do pedido | Nao vazio |
+| `pedido[].identificacao.motivocancelamento` | string | Sim | Motivo do cancelamento | Nao vazio |
+
+Exemplo de requisicao:
+```json
+{
+  "pedido": [
     {
-      "NOMPRO": "Produto Exemplo",
-      "CODCLI": "SKU-001",
-      "QTD": 2,
-      "VLRUNIT": 50,
-      "TOTAL": 100
+      "identificacao": {
+        "numeropedido": "12345",
+        "motivocancelamento": "Erro de destinatario"
+      }
     }
   ]
 }
 ```
 
-## Erros
-### `400 Payload invalido`
-Quando faltar campo obrigatorio, tipo invalido ou valor numerico negativo.
-
-Formato:
+Exemplo de resposta:
 ```json
 {
-  "message": "Payload invalido.",
-  "errors": [
-    "descricao do erro"
+  "success": true,
+  "message": "Cancelamento solicitado",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "12345",
+        "status": "CANCEL_REQUESTED"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+## Endpoint de Separacao (protegido)
+### `POST /pedidos/separacao`
+Obrigatorio header:
+- `Authorization: Bearer <tokenAcesso>`
+
+Campos:
+
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `pedido` | array | Sim | Lista de pedidos | Minimo 1 item |
+| `pedido[].identificacao.numeropedido` | string | Sim | Numero do pedido | Nao vazio |
+| `pedido[].identificacao.statusseparacao` | string | Sim | Status da separacao | `concluido`, `pendente`, `em_andamento` |
+| `pedido[].identificacao.volume` | number | Nao | Quantidade de volumes | `>= 0` |
+| `pedido[].identificacao.m3` | number | Nao | Cubagem | `>= 0` |
+
+Exemplo de requisicao:
+```json
+{
+  "pedido": [
+    {
+      "identificacao": {
+        "numeropedido": "12345",
+        "statusseparacao": "concluido",
+        "volume": 15,
+        "m3": 3
+      }
+    }
   ]
 }
 ```
 
-### `500 Erro ao inserir no banco`
-Erro interno ao gravar no banco.
+Exemplo de resposta:
+```json
+{
+  "success": true,
+  "message": "Status de separacao atualizado",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "12345",
+        "status": "OK"
+      }
+    ]
+  },
+  "error": null
+}
+```
 
-Formato:
+## Endpoint de Faturamento (protegido)
+### `POST /pedidos/faturamento`
+Obrigatorio header:
+- `Authorization: Bearer <tokenAcesso>`
+
+Campos:
+
+| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
+|---|---|---|---|---|
+| `pedido` | array | Sim | Lista de pedidos | Minimo 1 item |
+| `pedido[].numeropedido` | string | Sim | Numero do pedido | Nao vazio |
+| `pedido[].xmlnfe` | string | Sim | XML da NF-e | Nao vazio |
+| `pedido[].transportadora` | object | Nao | Dados da transportadora | Se enviado, deve ser objeto |
+| `pedido[].transportadora.cnpj` | string | Nao | CNPJ da transportadora | Opcional |
+| `pedido[].transportadora.nome` | string | Nao | Nome da transportadora | Opcional |
+| `pedido[].transportadora.ie` | string | Nao | IE da transportadora | Opcional |
+| `pedido[].transportadora.endereco` | string | Nao | Endereco da transportadora | Opcional |
+| `pedido[].transportadora.ibgecidade` | number | Nao | Codigo IBGE da cidade | `>= 0` |
+| `pedido[].transportadora.cep` | string | Nao | CEP da transportadora | Opcional |
+
+Exemplo de requisicao:
+```json
+{
+  "pedido": [
+    {
+      "numeropedido": "12345",
+      "transportadora": {
+        "cnpj": "12345678000190",
+        "nome": "TRANSPORTADORA EXEMPLO LTDA"
+      },
+      "xmlnfe": "base64-ou-xml-string"
+    }
+  ]
+}
+```
+
+Exemplo de resposta:
+```json
+{
+  "success": true,
+  "message": "Faturamento vinculado ao pedido",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "12345",
+        "status": "OK",
+        "chaveNfe": null
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+## Erros
+### `400 Falha na validacao` (novos endpoints de pedidos)
+```json
+{
+  "success": false,
+  "message": "Falha na validacao",
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "details": [
+      "descricao do erro"
+    ]
+  }
+}
+```
+
+### `401 Nao autorizado`
+```json
+{
+  "message": "Token de acesso obrigatorio.",
+  "error": "Envie o header Authorization: Bearer <tokenAcesso>."
+}
+```
+
+```json
+{
+  "message": "Token de acesso invalido.",
+  "error": "jwt expired"
+}
+```
+
+```json
+{
+  "message": "Credenciais invalidas."
+}
+```
+
+### `500 Erro ao inserir no banco` (`/produto` e `/tarefa-entrada`)
 ```json
 {
   "message": "Erro ao inserir no banco.",
