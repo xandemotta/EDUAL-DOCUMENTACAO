@@ -291,7 +291,8 @@ Tabela de parametros (`query`):
 
 | Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
 |---|---|---|---|---|---|
-| `numeroNfe` | string | Sim* | Alias de `refcli` | `ENT-POSTMAN-123` | Obrigatório |
+| `refcli` | string | Sim* | Referencia da entrada | `ENT-POSTMAN-123` | Obrigatorio quando `numeroNfe` nao for enviado |
+| `numeroNfe` | string | Sim* | Alias de `refcli` | `ENT-POSTMAN-123` | Obrigatorio quando `refcli` nao for enviado |
 | `cgccli` | string | Nao | CNPJ do cliente para filtrar por `NOCLI` | `00398268000123` | Se enviado: CNPJ valido; se nao existir cliente retorna `422` |
 
 Exemplo:
@@ -534,7 +535,7 @@ Regra importante:
 
 ### 5.8 POST `/pedidos/separacao`
 
-Atualiza status de separacao.
+Consulta status de separacao.
 
 Tabela `pedido[].identificacao`:
 
@@ -542,7 +543,6 @@ Tabela `pedido[].identificacao`:
 |---|---|---|---|---|---|
 | `numeropedido` | string | Sim | Numero do pedido | `PED-API-10001` | Necessario para localizar pedido |
 | `cgccli` | string | Sim | CNPJ do cliente | `00398268000123` | Cliente deve existir |
-| `statusseparacao` | string | Nao | Status da separacao | `concluido` | Endpoint aceita; valor e gravado em `STATUS` |
 
 Exemplo:
 
@@ -552,21 +552,23 @@ Exemplo:
     {
       "identificacao": {
         "numeropedido": "PED-API-10001",
-        "cgccli": "00398268000123",
-        "statusseparacao": "concluido"
+        "cgccli": "00398268000123"
       }
     }
   ]
 }
 ```
 
-Retorno inclui totais de separacao no corpo raiz (quando encontrados):
+Retorno inclui totais de separacao no corpo raiz:
 - `statusseparacao`
 - `noosmov`
 - `volume`
 - `pesobruto`
 - `pesoliquido`
 - `totalmercadoria`
+
+Regra de retorno:
+- `statusseparacao` retorna `concluido` quando existe separacao concluida; caso contrario retorna `pendente`.
 
 Exemplo de retorno (`200 OK`):
 
@@ -579,12 +581,18 @@ Exemplo de retorno (`200 OK`):
   "pesobruto": 12.3,
   "pesoliquido": 11.8,
   "totalmercadoria": 255,
-  "message": "Status de separacao atualizado",
+  "message": "Status de separacao consultado",
   "data": {
     "resultados": [
       {
         "numeroPedido": "PED-API-10001",
-        "status": "OK"
+        "status": "OK",
+        "statusseparacao": "concluido",
+        "noosmov": 98765,
+        "volume": 1,
+        "pesobruto": 12.3,
+        "pesoliquido": 11.8,
+        "totalmercadoria": 255
       }
     ]
   },
