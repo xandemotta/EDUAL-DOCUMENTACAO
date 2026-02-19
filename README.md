@@ -1,366 +1,42 @@
-# Documentacao de Consumo da API
+# API INFOCWB - Guia de Consumo
 
-## Base URL
-- `http://mmsistemas.ddns.net:3101`
+Data de referencia: 2026-02-19
 
-## Formato padrao
-- `Content-Type`: `application/json`
-- `Accept`: `application/json`
-- Autenticacao: `Bearer Token` obrigatorio em endpoints de negocio
+## 1. Base URL
 
-## Fluxo de autenticacao
-1. Consumidor chama `POST /auth/login` com `cnpjCliente`, `usuario` e `senha`.
-2. API retorna `tokenAcesso`.
-3. Consumidor envia `Authorization: Bearer <tokenAcesso>` em todas as chamadas de negocio.
+- Producao: `http://mmsistemas.ddns.net:3111`
 
-## Healthcheck
-### `GET /`
-Sem autenticacao.
+## 2. Autenticacao
 
-Exemplo de resposta:
-```json
-{
-  "status": "ok"
-}
+Todos os endpoints (exceto `GET /health`) exigem Bearer Token:
+
+```http
+Authorization: Bearer <seu_token>
 ```
 
-## Login
-### `POST /auth/login`
-Sem token.
+Headers recomendados:
 
-Campos:
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `cnpjCliente` | string | Sim | CNPJ do cliente | Nao vazio |
-| `usuario` ou `usuário` | string | Sim | Usuario de acesso | Nao vazio |
-| `senha` | string | Sim | Senha de acesso | Nao vazio |
-
-Exemplo de requisicao:
-```json
-{
-  "cnpjCliente": "12345678000190",
-  "usuario": "integrador",
-  "senha": "senhaForte@123"
-}
+```http
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <seu_token>
 ```
 
-Exemplo de resposta:
-```json
-{
-  "tokenAcesso": "<JWT>",
-  "tipo": "Bearer",
-  "expiraEm": "8h"
-}
-```
+## 3. Padrao de resposta
 
-## Endpoint de Produto (protegido)
-### `POST /produto`
-Obrigatorio header:
-- `Authorization: Bearer <tokenAcesso>`
+Sucesso:
 
-Campos:
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `NOMPRO` ou `nomeProduto` | string | Sim | Nome do produto | Nao vazio |
-| `DESCRICAO` ou `descricaoProduto` | string | Sim | Descricao do produto | Nao vazio |
-| `NOMUN` ou `unidadeMedida` | string | Sim | Unidade de medida | Nao vazio |
-| `BARPRO` ou `gtin` | string | Nao | Codigo de barras | Se enviado, nao vazio |
-| `CODCLI` ou `skuCliente` | string | Nao | SKU do cliente | Se enviado, nao vazio |
-| `NONCM` ou `ncm` | string | Nao | NCM do produto | Se enviado, nao vazio |
-| `ALT` ou `altura` | number | Nao | Altura | `>= 0` |
-| `LARG` ou `largura` | number | Nao | Largura | `>= 0` |
-| `PROF` ou `profundidade` | number | Nao | Profundidade | `>= 0` |
-| `PESOLIQ` ou `pesoLiquido` | number | Nao | Peso liquido | `>= 0` |
-| `PESOBR` ou `pesoBruto` | number | Nao | Peso bruto | `>= 0` |
-| `M2` ou `m2` | number | Nao | Area em m2 | `>= 0` |
-| `M3` ou `m3` | number | Nao | Cubagem em m3 | `>= 0` |
-
-Regra importante:
-- Nao enviar os dois nomes do mesmo campo (exemplo: `NOMPRO` e `nomeProduto` juntos).
-
-Exemplo de resposta:
-```json
-{
-  "NOMPRO": "Camisa Dry Fit",
-  "DESCRICAO": "Camisa esportiva manga curta",
-  "NOMUN": "UN"
-}
-```
-
-## Endpoint de Entrada de Nota (protegido)
-### `POST /tarefa-entrada`
-Obrigatorio header:
-- `Authorization: Bearer <tokenAcesso>`
-
-Campos da requisicao:
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `notas` | array | Sim | Lista de notas | Minimo 1 item |
-
-Campos por nota (`notas[]`):
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `identificacao.numeroNfe` | string | Sim | Numero da NF-e | Nao vazio |
-| `identificacao.serie` | string | Sim | Serie da NF-e | Nao vazio |
-| `identificacao.chaveNfe` | string | Sim | Chave da NF-e | Nao vazio |
-| `identificacao.cnpjcliente` | string | Sim | CNPJ do cliente | Nao vazio |
-| `identificacao.nomecliente` | string | Sim | Nome do cliente | Nao vazio |
-| `identificacao.tipomovimentacao` | string | Sim | Tipo de movimentacao | Nao vazio |
-| `identificacao.destinatario.cnpj` | string | Sim | CNPJ do destinatario | Nao vazio |
-| `identificacao.destinatario.nome` | string | Sim | Nome do destinatario | Nao vazio |
-| `identificacao.destinatario.ie` | string | Sim | IE do destinatario | Nao vazio |
-| `identificacao.destinatario.endereco` | string | Sim | Endereco do destinatario | Nao vazio |
-| `identificacao.destinatario.ibgecidade` | number | Sim | Codigo IBGE da cidade | `>= 0` |
-| `identificacao.destinatario.cep` | number | Sim | CEP do destinatario | `>= 0` |
-| `itens` | array | Sim | Itens da nota | Minimo 1 item |
-| `totais.valorProdutos` | number | Sim | Soma dos produtos | `>= 0` |
-| `totais.pesoBrutoTotal` | number | Sim | Peso bruto total | `>= 0` |
-| `totais.pesoLiquidoTotal` | number | Sim | Peso liquido total | `>= 0` |
-| `xml.nfe` | string | Sim | XML da NF-e | Nao vazio |
-
-Campos por item (`notas[].itens[]`):
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `skuProduto` | string | Sim | SKU do produto | Nao vazio |
-| `descricaoProduto` | string | Sim | Descricao do produto | Nao vazio |
-| `quantidade` | number | Sim | Quantidade | `>= 0` |
-| `valorUnitario` | number | Sim | Valor unitario | `>= 0` |
-| `valorTotal` | number | Sim | Valor total | `>= 0` |
-| `unidadeMedida` | string | Sim | Unidade de medida | Nao vazio |
-| `pesoBruto` | number | Sim | Peso bruto do item | `>= 0` |
-| `gtin` | string | Nao | Codigo de barras | Se enviado, nao vazio |
-| `pesoLiquido` | number | Nao | Peso liquido do item | `>= 0` |
-| `dimensoes.largura` | number | Nao | Largura do item | `>= 0` |
-| `dimensoes.altura` | number | Nao | Altura do item | `>= 0` |
-| `dimensoes.profundidade` | number | Nao | Profundidade do item | `>= 0` |
-
-## Endpoint de Pedidos (protegido)
-### `POST /pedidos`
-Obrigatorio header:
-- `Authorization: Bearer <tokenAcesso>`
-
-Campos:
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `pedidos` | array | Sim | Lista de pedidos | Minimo 1 item |
-| `pedidos[].identificacao.numeropedido` | string | Sim | Numero do pedido | Nao vazio |
-| `pedidos[].identificacao.cnpjcliente` | string | Sim | CNPJ do cliente | Nao vazio |
-| `pedidos[].identificacao.nomecliente` | string | Sim | Nome do cliente | Nao vazio |
-| `pedidos[].identificacao.tipomovimentacao` | string | Sim | Tipo de movimentacao | Deve ser `SAIDA` |
-| `pedidos[].identificacao.destinatario.cnpj` | string | Sim | CNPJ do destinatario | Nao vazio |
-| `pedidos[].identificacao.destinatario.nome` | string | Sim | Nome do destinatario | Nao vazio |
-| `pedidos[].itens` | array | Sim | Itens do pedido | Minimo 1 item |
-| `pedidos[].itens[].skuProduto` | string | Sim | SKU do item | Nao vazio |
-| `pedidos[].itens[].quantidade` | number | Sim | Quantidade do item | `> 0` |
-| `pedidos[].itens[].valorUnitario` | number | Sim | Valor unitario | `>= 0` |
-| `pedidos[].itens[].valorTotal` | number | Sim | Valor total | `>= 0` |
-| `pedidos[].itens[].unidadeMedida` | string | Sim | Unidade de medida | Nao vazio |
-| `pedidos[].totais.valorProdutos` | number | Sim | Soma dos produtos | `>= 0` |
-
-Exemplo de requisicao:
-```json
-{
-  "pedidos": [
-    {
-      "identificacao": {
-        "numeropedido": "12345",
-        "cnpjcliente": "12345678000190",
-        "nomecliente": "CLIENTE EXEMPLO LTDA",
-        "tipomovimentacao": "SAIDA",
-        "destinatario": {
-          "cnpj": "12345678000190",
-          "nome": "DESTINATARIO EXEMPLO LTDA"
-        }
-      },
-      "itens": [
-        {
-          "skuProduto": "SKU-001",
-          "quantidade": 10,
-          "valorUnitario": 25.5,
-          "valorTotal": 255,
-          "unidadeMedida": "UN"
-        }
-      ],
-      "totais": {
-        "valorProdutos": 255
-      }
-    }
-  ]
-}
-```
-
-Exemplo de resposta:
 ```json
 {
   "success": true,
-  "message": "Pedidos registrados",
-  "data": {
-    "resultados": [
-      {
-        "numeroPedido": "12345",
-        "status": "OK",
-        "protocoloPedido": "PED-1700000000000-1"
-      }
-    ]
-  },
+  "message": "OK",
+  "data": {},
   "error": null
 }
 ```
 
-## Endpoint de Cancelamento (protegido)
-### `POST /pedidos/cancelamento`
-Obrigatorio header:
-- `Authorization: Bearer <tokenAcesso>`
+Erro:
 
-Campos:
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `pedido` | array | Sim | Lista de pedidos | Minimo 1 item |
-| `pedido[].identificacao.numeropedido` | string | Sim | Numero do pedido | Nao vazio |
-| `pedido[].identificacao.motivocancelamento` | string | Sim | Motivo do cancelamento | Nao vazio |
-
-Exemplo de requisicao:
-```json
-{
-  "pedido": [
-    {
-      "identificacao": {
-        "numeropedido": "12345",
-        "motivocancelamento": "Erro de destinatario"
-      }
-    }
-  ]
-}
-```
-
-Exemplo de resposta:
-```json
-{
-  "success": true,
-  "message": "Cancelamento solicitado",
-  "data": {
-    "resultados": [
-      {
-        "numeroPedido": "12345",
-        "status": "CANCEL_REQUESTED"
-      }
-    ]
-  },
-  "error": null
-}
-```
-
-## Endpoint de Separacao (protegido)
-### `POST /pedidos/separacao`
-Obrigatorio header:
-- `Authorization: Bearer <tokenAcesso>`
-
-Campos:
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `pedido` | array | Sim | Lista de pedidos | Minimo 1 item |
-| `pedido[].identificacao.numeropedido` | string | Sim | Numero do pedido | Nao vazio |
-| `pedido[].identificacao.statusseparacao` | string | Sim | Status da separacao | `concluido`, `pendente`, `em_andamento` |
-| `pedido[].identificacao.volume` | number | Nao | Quantidade de volumes | `>= 0` |
-| `pedido[].identificacao.m3` | number | Nao | Cubagem | `>= 0` |
-
-Exemplo de requisicao:
-```json
-{
-  "pedido": [
-    {
-      "identificacao": {
-        "numeropedido": "12345",
-        "statusseparacao": "concluido",
-        "volume": 15,
-        "m3": 3
-      }
-    }
-  ]
-}
-```
-
-Exemplo de resposta:
-```json
-{
-  "success": true,
-  "message": "Status de separacao atualizado",
-  "data": {
-    "resultados": [
-      {
-        "numeroPedido": "12345",
-        "status": "OK"
-      }
-    ]
-  },
-  "error": null
-}
-```
-
-## Endpoint de Faturamento (protegido)
-### `POST /pedidos/faturamento`
-Obrigatorio header:
-- `Authorization: Bearer <tokenAcesso>`
-
-Campos:
-
-| Campo | Tipo | Obrigatorio | Descricao | Validacao/Regras |
-|---|---|---|---|---|
-| `pedido` | array | Sim | Lista de pedidos | Minimo 1 item |
-| `pedido[].numeropedido` | string | Sim | Numero do pedido | Nao vazio |
-| `pedido[].xmlnfe` | string | Sim | XML da NF-e | Nao vazio |
-| `pedido[].transportadora` | object | Nao | Dados da transportadora | Se enviado, deve ser objeto |
-| `pedido[].transportadora.cnpj` | string | Nao | CNPJ da transportadora | Opcional |
-| `pedido[].transportadora.nome` | string | Nao | Nome da transportadora | Opcional |
-| `pedido[].transportadora.ie` | string | Nao | IE da transportadora | Opcional |
-| `pedido[].transportadora.endereco` | string | Nao | Endereco da transportadora | Opcional |
-| `pedido[].transportadora.ibgecidade` | number | Nao | Codigo IBGE da cidade | `>= 0` |
-| `pedido[].transportadora.cep` | string | Nao | CEP da transportadora | Opcional |
-
-Exemplo de requisicao:
-```json
-{
-  "pedido": [
-    {
-      "numeropedido": "12345",
-      "transportadora": {
-        "cnpj": "12345678000190",
-        "nome": "TRANSPORTADORA EXEMPLO LTDA"
-      },
-      "xmlnfe": "base64-ou-xml-string"
-    }
-  ]
-}
-```
-
-Exemplo de resposta:
-```json
-{
-  "success": true,
-  "message": "Faturamento vinculado ao pedido",
-  "data": {
-    "resultados": [
-      {
-        "numeroPedido": "12345",
-        "status": "OK",
-        "chaveNfe": null
-      }
-    ]
-  },
-  "error": null
-}
-```
-
-## Erros
-### `400 Falha na validacao` (novos endpoints de pedidos)
 ```json
 {
   "success": false,
@@ -369,37 +45,378 @@ Exemplo de resposta:
   "error": {
     "code": "VALIDATION_ERROR",
     "details": [
-      "descricao do erro"
-    ]
+      { "field": "campo", "message": "mensagem" }
+    ],
+    "traceId": "uuid"
   }
 }
 ```
 
-### `401 Nao autorizado`
-```json
-{
-  "message": "Token de acesso obrigatorio.",
-  "error": "Envie o header Authorization: Bearer <tokenAcesso>."
-}
-```
+Observacao:
+- Para regras de negocio, `error.code` vem como `BUSINESS_RULE_ERROR` (HTTP 422).
+
+## 4. Healthcheck
+
+### GET `/health`
+
+Sem autenticacao.
+
+Exemplo de retorno:
 
 ```json
 {
-  "message": "Token de acesso invalido.",
-  "error": "jwt expired"
+  "success": true,
+  "message": "OK",
+  "data": { "service": "online" },
+  "error": null
 }
 ```
 
+## 5. Endpoints de consumo
+
+### 5.1 POST `/produtos`
+
+Upsert de produto (chave por `codcli`).
+
+Campos obrigatorios:
+- `nompro`
+- `descricao`
+- `codcli`
+- `nomun`
+
+Exemplo:
+
 ```json
 {
-  "message": "Credenciais invalidas."
+  "nompro": "Produto Exemplo",
+  "barpro": "7891234567890",
+  "descricao": "Descricao completa do produto",
+  "codcli": "SKU-001",
+  "noncm": "12345678",
+  "alt": 20,
+  "larg": 30,
+  "prof": 15,
+  "pesoliq": 5.0,
+  "pesobr": 5.2,
+  "m2": 0.6,
+  "m3": 0.009,
+  "nomun": "UN"
 }
 ```
 
-### `500 Erro ao inserir no banco` (`/produto` e `/tarefa-entrada`)
+Retorno esperado: `200 OK`.
+
+### 5.2 POST `/entradas`
+
+Registra entrada por nota (`notas[]`).
+
+Campos obrigatorios em `notas[].identificacao`:
+- `numeroNfe`
+- `serie`
+- `chaveNfe` (44 digitos)
+- `cnpjcliente` (14 digitos)
+- `nomecliente`
+- `tipomovimentacao`
+- `cnpjDestinatario` (14 digitos)
+
+Campos obrigatorios em `notas[].itens[]`:
+- `skuProduto`
+- `descricaoProduto`
+- `quantidade` (> 0)
+- `valorUnitario` (>= 0)
+- `valorTotal` (>= 0 e igual a `quantidade * valorUnitario`)
+- `gtin` (8/12/13/14 digitos)
+- `pesoBruto` (>= 0)
+- `pesoLiquido` (>= 0)
+- `dimensoes.largura` (>= 0)
+- `dimensoes.altura` (>= 0)
+- `dimensoes.profundidade` (>= 0)
+
+Exemplo:
+
 ```json
 {
-  "message": "Erro ao inserir no banco.",
-  "error": "mensagem tecnica"
+  "notas": [
+    {
+      "identificacao": {
+        "numeroNfe": "ENT-POSTMAN-123",
+        "serie": "1",
+        "chaveNfe": "35191111111111111111550010000012345678901234",
+        "cnpjcliente": "00398268000123",
+        "nomecliente": "POLIOTTO IMPORTACAO E EXPORTACAO DE PLASTICOS LTDA",
+        "tipomovimentacao": "ENTRADA",
+        "cnpjDestinatario": "11259442000173",
+        "usuario": "INTEGRACAO"
+      },
+      "itens": [
+        {
+          "skuProduto": "SKU-001",
+          "descricaoProduto": "Produto Exemplo 1",
+          "quantidade": 10,
+          "valorUnitario": 25.5,
+          "valorTotal": 255,
+          "unidadeMedida": "UN",
+          "gtin": "7891234567890",
+          "pesoBruto": 5.2,
+          "pesoLiquido": 5,
+          "dimensoes": {
+            "largura": 30,
+            "altura": 20,
+            "profundidade": 15
+          }
+        }
+      ]
+    }
+  ]
 }
 ```
+
+Retorno esperado: `200 OK`.
+Erros comuns: `400` (validacao), `422` (cliente/armazem nao encontrados, regras de itens).
+
+### 5.3 POST `/entradas/itens`
+
+Inclui itens em uma pre-tarefa ja existente.
+
+Campos obrigatorios:
+- `refcli`
+- `itens[]` com:
+- `nompro`, `qtd`, `vlrunit`, `total`
+
+`cgccli` e opcional (se enviado, deve ser CNPJ valido).
+
+Exemplo:
+
+```json
+{
+  "cgccli": "00398268000123",
+  "refcli": "ENT-POSTMAN-123",
+  "itens": [
+    {
+      "nompro": "Produto Exemplo 2",
+      "codcli": "SKU-002",
+      "qtd": 5,
+      "vlrunit": 10,
+      "total": 50
+    }
+  ]
+}
+```
+
+### 5.4 PATCH `/entradas/status`
+
+Atualiza status da entrada.
+
+Campos obrigatorios:
+- `refcli`
+- `status`
+
+`cgccli` e opcional (se enviado, deve ser CNPJ valido).
+
+Exemplo:
+
+```json
+{
+  "cgccli": "00398268000123",
+  "refcli": "ENT-POSTMAN-123",
+  "status": "EM_PROCESSO"
+}
+```
+
+### 5.5 GET `/entradas`
+
+Consulta entrada por `refcli`.
+
+Query params:
+- `refcli` (obrigatorio)
+- `cgccli` (opcional; se enviado e nao existir cliente, retorna `422`)
+
+Exemplo:
+
+```http
+GET /entradas?cgccli=00398268000123&refcli=ENT-POSTMAN-123
+```
+
+### 5.6 POST `/pedidos`
+
+Cria pedido de separacao.
+
+Campos obrigatorios em `pedidos[].identificacao`:
+- `numeropedido`
+- `cgccli` (CNPJ cliente)
+- `tipomovimentacao`
+- `destinatario.cnpj`
+- `destinatario.nome`
+
+Campos obrigatorios em `pedidos[].itens[]`:
+- `nompro`
+- `qtd`
+- `vlrunit`
+- `total`
+
+Exemplo:
+
+```json
+{
+  "pedidos": [
+    {
+      "identificacao": {
+        "numeropedido": "PED-API-10001",
+        "cgccli": "00398268000123",
+        "nomecliente": "POLIOTTO IMPORTACAO E EXPORTACAO DE PLASTICOS LTDA",
+        "tipomovimentacao": "SAIDA",
+        "destinatario": {
+          "cnpj": "04700714000163",
+          "nome": "APM TERMINALS PORTUARIOS SA",
+          "ie": "12345678",
+          "endereco": "Rua Exemplo 456",
+          "numero": "456",
+          "complemento": "Galpao",
+          "bairro": "Centro",
+          "ibgecidade": 1200013,
+          "cep": "88301365"
+        },
+        "usuario": "INTEGRACAO"
+      },
+      "itens": [
+        {
+          "nompro": "Produto Exemplo 1",
+          "codcli": "SKU-001",
+          "qtd": 10,
+          "vlrunit": 25.5,
+          "total": 255
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 5.7 POST `/pedidos/cancelamento`
+
+Solicita cancelamento do pedido.
+
+Campos obrigatorios:
+- `identificacao.numeropedido`
+- `identificacao.cgccli`
+
+Campo opcional:
+- `identificacao.motivocancelamento`
+
+Exemplo:
+
+```json
+{
+  "pedido": [
+    {
+      "identificacao": {
+        "numeropedido": "PED-API-10001",
+        "cgccli": "00398268000123",
+        "motivocancelamento": "Cancelamento solicitado"
+      }
+    }
+  ]
+}
+```
+
+Regra importante:
+- Se o pedido ja estiver em separacao, o cancelamento retorna `422`.
+
+### 5.8 POST `/pedidos/separacao`
+
+Atualiza status de separacao.
+
+Campos usados:
+- `identificacao.numeropedido`
+- `identificacao.cgccli`
+- `identificacao.statusseparacao`
+
+Exemplo:
+
+```json
+{
+  "pedido": [
+    {
+      "identificacao": {
+        "numeropedido": "PED-API-10001",
+        "cgccli": "00398268000123",
+        "statusseparacao": "concluido"
+      }
+    }
+  ]
+}
+```
+
+Retorno inclui totais de separacao no corpo raiz (quando encontrados):
+- `statusseparacao`
+- `noosmov`
+- `volume`
+- `pesobruto`
+- `pesoliquido`
+- `totalmercadoria`
+
+### 5.9 POST `/pedidos/faturamento`
+
+Vincula faturamento ao pedido.
+
+Campos obrigatorios:
+- `identificacao.numeropedido`
+- `identificacao.volume` (numero)
+- `identificacao.pesoBruto` (numero)
+
+Campos recomendados:
+- `identificacao.cgccli`
+- `identificacao.pesoLiquido`
+- `identificacao.xmlnfe`
+- `identificacao.transportadora`
+
+Exemplo:
+
+```json
+{
+  "pedido": [
+    {
+      "identificacao": {
+        "numeropedido": "PED-API-10001",
+        "cgccli": "00398268000123",
+        "volume": 1,
+        "pesoBruto": 12.3,
+        "pesoLiquido": 11.8,
+        "xmlnfe": "<nfe>xml-faturamento</nfe>",
+        "transportadora": {
+          "cnpj": "11259442000173",
+          "nome": "TRANSPORTADORA TESTE"
+        }
+      }
+    }
+  ]
+}
+```
+
+Regras importantes:
+- Precisa existir separacao concluida para o pedido.
+- `volume` e `pesoBruto` do payload devem bater com os totais do sistema.
+- Se `pesoLiquido` for enviado, tambem precisa bater.
+- Em schema sem coluna `PEDIDO` em `TABPRETAREFA`, este endpoint retorna `422`.
+
+## 6. Fluxo recomendado de consumo
+
+Fluxo de saida (pedido):
+1. `POST /pedidos`
+2. `POST /pedidos/separacao`
+3. `POST /pedidos/faturamento`
+
+Fluxo de entrada:
+1. `POST /entradas`
+2. (opcional) `POST /entradas/itens`
+3. (opcional) `PATCH /entradas/status`
+4. (opcional) `GET /entradas`
+
+## 7. Postman
+
+Collection pronta para consumo:
+- `docs/postman_collection_infocwb.json`
+
+Variaveis principais:
+- `base_url` = `http://mmsistemas.ddns.net:3111`
+- `token` = Bearer token valido
