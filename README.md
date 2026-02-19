@@ -104,7 +104,42 @@ Exemplo:
 }
 ```
 
-Retorno esperado: `200 OK`.
+Exemplo de retorno (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Produto cadastrado/atualizado com sucesso",
+  "data": {
+    "codcli": "SKU-001",
+    "nopro": 12345,
+    "noun": 1,
+    "nomun": "UN",
+    "status": "UPDATED"
+  },
+  "error": null
+}
+```
+
+Exemplo de erro (`400 Bad Request`):
+
+```json
+{
+  "success": false,
+  "message": "Falha na validacao",
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "details": [
+      {
+        "field": "nompro",
+        "message": "Obrigatorio, 1..120"
+      }
+    ],
+    "traceId": "7f5a9f58-b0fd-4dd8-a2f0-5bf7ebf16af8"
+  }
+}
+```
 
 ### 5.2 POST `/entradas`
 
@@ -171,22 +206,114 @@ Exemplo:
 }
 ```
 
-Retorno esperado: `200 OK`.
+Exemplo de retorno (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Entrada registrada",
+  "data": {
+    "resultados": [
+      {
+        "nopr": 123456,
+        "refcli": "ENT-POSTMAN-123",
+        "chaveNfe": "35191111111111111111550010000012345678901234",
+        "status": "OK"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+Exemplo de erro (`422 Unprocessable Entity`):
+
+```json
+{
+  "success": false,
+  "message": "Regra de negocio invalida",
+  "data": null,
+  "error": {
+    "code": "BUSINESS_RULE_ERROR",
+    "details": [
+      {
+        "field": "identificacao.cnpjcliente",
+        "message": "Cliente nao encontrado para cnpjcliente=00398268000123"
+      }
+    ],
+    "traceId": "f8d203bc-cd94-4d14-ad8a-8ec2f789fbd4"
+  }
+}
+```
+
 Erros comuns: `400` (validacao), `422` (cliente/armazem nao encontrados, regras de itens).
 
 
 ### 5.5 GET `/entradas`
 
-Consulta entrada por `refcli`.
+Consulta entrada por `refcli` (ou `numeroNfe` como alias).
 
 Query params:
-- `refcli` (obrigatorio)
+- `refcli` (obrigatorio, quando `numeroNfe` nao for enviado)
+- `numeroNfe` (alias de `refcli`; use um ou outro)
 - `cgccli` (opcional; se enviado e nao existir cliente, retorna `422`)
 
 Exemplo:
 
 ```http
 GET /entradas?cgccli=00398268000123&refcli=ENT-POSTMAN-123
+```
+
+Exemplo equivalente com alias:
+
+```http
+GET /entradas?cgccli=00398268000123&numeroNfe=ENT-POSTMAN-123
+```
+
+Exemplo de retorno (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Entrada consultada",
+  "data": {
+    "resultados": [
+      {
+        "NOPRETAREFA": 123456,
+        "USUARIO": null,
+        "NOCLI": 10,
+        "NOEMP": 1,
+        "DATAREG": "2026-02-19T14:00:00.000Z",
+        "REFCLI": "ENT-POSTMAN-123",
+        "STATUS": "EM_PROCESSO",
+        "OBS": null,
+        "DESTINATARIO": null,
+        "TRANSPORTE": null
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+Exemplo de erro (`400 Bad Request`):
+
+```json
+{
+  "success": false,
+  "message": "Falha na validacao",
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "details": [
+      {
+        "field": "refcli|numeroNfe",
+        "message": "Campo obrigatorio"
+      }
+    ],
+    "traceId": "0580b933-c69f-46b5-9de0-2e38990de5f3"
+  }
+}
 ```
 
 ### 5.6 POST `/pedidos`
@@ -244,6 +371,45 @@ Exemplo:
 }
 ```
 
+Exemplo de retorno (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Pedidos registrados",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "PED-API-10001",
+        "nopr": 123457,
+        "status": "OK"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+Exemplo de erro (`400 Bad Request`):
+
+```json
+{
+  "success": false,
+  "message": "Falha na validacao",
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "details": [
+      {
+        "field": "pedidos",
+        "message": "Array obrigatorio com ao menos 1 pedido"
+      }
+    ],
+    "traceId": "f2f2f307-ed40-455a-96f9-c0f7432f2e95"
+  }
+}
+```
+
 ### 5.7 POST `/pedidos/cancelamento`
 
 Solicita cancelamento do pedido.
@@ -268,6 +434,44 @@ Exemplo:
       }
     }
   ]
+}
+```
+
+Exemplo de retorno (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Cancelamento solicitado",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "PED-API-10001",
+        "status": "CANCELADO"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+Exemplo de erro (`422 Unprocessable Entity`):
+
+```json
+{
+  "success": false,
+  "message": "Regra de negocio invalida",
+  "data": null,
+  "error": {
+    "code": "BUSINESS_RULE_ERROR",
+    "details": [
+      {
+        "field": "pedido",
+        "message": "Pedido ja em separacao (NOOSMOV=123). Necessario validar regra com Marcio."
+      }
+    ],
+    "traceId": "3263e5e7-627a-4f3c-b8ab-d8f790d6f933"
+  }
 }
 ```
 
@@ -307,6 +511,50 @@ Retorno inclui totais de separacao no corpo raiz (quando encontrados):
 - `pesoliquido`
 - `totalmercadoria`
 
+Exemplo de retorno (`200 OK`):
+
+```json
+{
+  "success": true,
+  "statusseparacao": "concluido",
+  "noosmov": 98765,
+  "volume": 1,
+  "pesobruto": 12.3,
+  "pesoliquido": 11.8,
+  "totalmercadoria": 255,
+  "message": "Status de separacao atualizado",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "PED-API-10001",
+        "status": "OK"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+Exemplo de erro (`422 Unprocessable Entity`):
+
+```json
+{
+  "success": false,
+  "message": "Regra de negocio invalida",
+  "data": null,
+  "error": {
+    "code": "BUSINESS_RULE_ERROR",
+    "details": [
+      {
+        "field": "pedido",
+        "message": "Pedido nao encontrado: PED-API-10001"
+      }
+    ],
+    "traceId": "ed10228e-e78d-4e6e-bdd7-f4381cfe89fa"
+  }
+}
+```
+
 ### 5.9 POST `/pedidos/faturamento`
 
 Vincula faturamento ao pedido.
@@ -342,6 +590,44 @@ Exemplo:
       }
     }
   ]
+}
+```
+
+Exemplo de retorno (`200 OK`):
+
+```json
+{
+  "success": true,
+  "message": "Faturamento vinculado ao pedido",
+  "data": {
+    "resultados": [
+      {
+        "numeroPedido": "PED-API-10001",
+        "status": "OK"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+Exemplo de erro (`422 Unprocessable Entity`):
+
+```json
+{
+  "success": false,
+  "message": "Regra de negocio invalida",
+  "data": null,
+  "error": {
+    "code": "BUSINESS_RULE_ERROR",
+    "details": [
+      {
+        "field": "identificacao.volume",
+        "message": "Volume divergente para pedido=PED-API-10001: payload=1 sistema=2"
+      }
+    ],
+    "traceId": "d61e5e3e-ab17-4ca0-89dd-59c934089570"
+  }
 }
 ```
 
