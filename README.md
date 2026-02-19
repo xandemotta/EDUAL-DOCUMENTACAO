@@ -704,6 +704,4 @@ Fluxo de saida (pedido):
 
 Fluxo de entrada:
 1. `POST /entradas`
-2. (opcional) `POST /entradas/itens`
-3. (opcional) `PATCH /entradas/status`
 4. (opcional) `GET /entradas`
