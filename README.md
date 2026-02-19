@@ -174,35 +174,6 @@ Exemplo:
 Retorno esperado: `200 OK`.
 Erros comuns: `400` (validacao), `422` (cliente/armazem nao encontrados, regras de itens).
 
-### 5.3 POST `/entradas/itens`
-
-Inclui itens em uma pre-tarefa ja existente.
-
-Campos obrigatorios:
-- `refcli`
-- `itens[]` com:
-- `nompro`, `qtd`, `vlrunit`, `total`
-
-`cgccli` e opcional (se enviado, deve ser CNPJ valido).
-
-Exemplo:
-
-```json
-{
-  "cgccli": "00398268000123",
-  "refcli": "ENT-POSTMAN-123",
-  "itens": [
-    {
-      "nompro": "Produto Exemplo 2",
-      "codcli": "SKU-002",
-      "qtd": 5,
-      "vlrunit": 10,
-      "total": 50
-    }
-  ]
-}
-```
-
 ### 5.4 PATCH `/entradas/status`
 
 Atualiza status da entrada.
