@@ -291,8 +291,7 @@ Tabela de parametros (`query`):
 
 | Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
 |---|---|---|---|---|---|
-| `refcli` | string | Sim* | Referencia da entrada | `ENT-POSTMAN-123` | Obrigatorio quando `numeroNfe` nao for enviado |
-| `numeroNfe` | string | Sim* | Alias de `refcli` | `ENT-POSTMAN-123` | Obrigatorio quando `refcli` nao for enviado |
+| `numeroNfe` | string | Sim* | Alias de `refcli` | `ENT-POSTMAN-123` | Obrigatório |
 | `cgccli` | string | Nao | CNPJ do cliente para filtrar por `NOCLI` | `00398268000123` | Se enviado: CNPJ valido; se nao existir cliente retorna `422` |
 
 Exemplo:
