@@ -174,25 +174,6 @@ Exemplo:
 Retorno esperado: `200 OK`.
 Erros comuns: `400` (validacao), `422` (cliente/armazem nao encontrados, regras de itens).
 
-### 5.4 PATCH `/entradas/status`
-
-Atualiza status da entrada.
-
-Campos obrigatorios:
-- `refcli`
-- `status`
-
-`cgccli` e opcional (se enviado, deve ser CNPJ valido).
-
-Exemplo:
-
-```json
-{
-  "cgccli": "00398268000123",
-  "refcli": "ENT-POSTMAN-123",
-  "status": "EM_PROCESSO"
-}
-```
 
 ### 5.5 GET `/entradas`
 
