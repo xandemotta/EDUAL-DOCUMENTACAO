@@ -78,11 +78,24 @@ Exemplo de retorno:
 
 Upsert de produto (chave por `codcli`).
 
-Campos obrigatorios:
-- `nompro`
-- `descricao`
-- `codcli`
-- `nomun`
+Tabela de campos (`body`):
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `nompro` | string | Sim | Nome do produto | `Produto Exemplo` | Obrigatorio, `1..120` |
+| `descricao` | string | Sim | Descricao completa | `Descricao completa do produto` | Obrigatorio, `1..600` |
+| `codcli` | string | Sim | SKU/codigo do cliente (chave de upsert) | `SKU-001` | Obrigatorio, `1..50` |
+| `nomun` | string | Sim | Unidade de medida | `UN` | Obrigatorio, `1..10` |
+| `barpro` | string | Nao | GTIN/EAN | `7891234567890` | Se enviado: 8/12/13/14 digitos |
+| `cobpro` | string | Nao | Flag de cobranca/controle | `F` | Tamanho `1`; default `F` |
+| `noncm` | string | Nao | NCM do produto | `12345678` | Sem validacao de tamanho no endpoint |
+| `alt` | number | Nao | Altura (cm) | `20` | Se enviado: `>= 0` |
+| `larg` | number | Nao | Largura (cm) | `30` | Se enviado: `>= 0` |
+| `prof` | number | Nao | Profundidade (cm) | `15` | Se enviado: `>= 0` |
+| `pesoliq` | number | Nao | Peso liquido (kg) | `5.0` | Se enviado: `>= 0` |
+| `pesobr` | number | Nao | Peso bruto (kg) | `5.2` | Se enviado: `>= 0` |
+| `m2` | number | Nao | Area (m2) | `0.6` | Se enviado: `>= 0` |
+| `m3` | number | Nao | Cubagem (m3) | `0.009` | Se enviado: `>= 0` |
 
 Exemplo:
 
@@ -145,27 +158,35 @@ Exemplo de erro (`400 Bad Request`):
 
 Registra entrada por nota (`notas[]`).
 
-Campos obrigatorios em `notas[].identificacao`:
-- `numeroNfe`
-- `serie`
-- `chaveNfe` (44 digitos)
-- `cnpjcliente` (14 digitos)
-- `nomecliente`
-- `tipomovimentacao`
-- `cnpjDestinatario` (14 digitos)
+Campos separados por tabela/objeto:
 
-Campos obrigatorios em `notas[].itens[]`:
-- `skuProduto`
-- `descricaoProduto`
-- `quantidade` (> 0)
-- `valorUnitario` (>= 0)
-- `valorTotal` (>= 0 e igual a `quantidade * valorUnitario`)
-- `gtin` (8/12/13/14 digitos)
-- `pesoBruto` (>= 0)
-- `pesoLiquido` (>= 0)
-- `dimensoes.largura` (>= 0)
-- `dimensoes.altura` (>= 0)
-- `dimensoes.profundidade` (>= 0)
+Tabela `notas[].identificacao`
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `numeroNfe` | string | Sim | Identificador da nota de entrada | `ENT-POSTMAN-123` | Campo obrigatorio (nao vazio) |
+| `serie` | string | Sim | Serie da nota | `1` | Campo obrigatorio (nao vazio) |
+| `chaveNfe` | string | Sim | Chave da NF-e | `3519...1234` | Exatamente 44 digitos |
+| `cnpjcliente` | string | Sim | CNPJ do cliente | `00398268000123` | CNPJ valido (14 digitos) |
+| `nomecliente` | string | Sim | Nome do cliente | `POLIOTTO...` | Campo obrigatorio (nao vazio) |
+| `tipomovimentacao` | string | Sim | Tipo da movimentacao | `ENTRADA` | Campo obrigatorio; precisa existir na `TABOPOS` |
+| `cnpjDestinatario` | string | Sim | CNPJ do armazem destino | `11259442000173` | CNPJ valido; precisa existir na `TABEMP` |
+
+Tabela `notas[].itens[]`
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `skuProduto` | string | Sim | SKU do produto | `SKU-001` | Campo obrigatorio (nao vazio) |
+| `descricaoProduto` | string | Sim | Descricao do item | `Produto Exemplo 1` | Campo obrigatorio (nao vazio) |
+| `quantidade` | number | Sim | Quantidade do item | `10` | Deve ser `> 0` |
+| `valorUnitario` | number | Sim | Valor unitario | `25.5` | Deve ser `>= 0` |
+| `valorTotal` | number | Sim | Total do item | `255` | Deve ser `>= 0` e igual a `quantidade * valorUnitario` |
+| `gtin` | string | Sim | GTIN/EAN do item | `7891234567890` | 8/12/13/14 digitos |
+| `pesoBruto` | number | Sim | Peso bruto do item (kg) | `5.2` | Deve ser `>= 0` |
+| `pesoLiquido` | number | Sim | Peso liquido do item (kg) | `5.0` | Deve ser `>= 0` |
+| `dimensoes.largura` | number | Sim | Largura do item (cm) | `30` | Deve ser `>= 0` |
+| `dimensoes.altura` | number | Sim | Altura do item (cm) | `20` | Deve ser `>= 0` |
+| `dimensoes.profundidade` | number | Sim | Profundidade do item (cm) | `15` | Deve ser `>= 0` |
 
 Exemplo:
 
@@ -253,10 +274,13 @@ Erros comuns: `400` (validacao), `422` (cliente/armazem nao encontrados, regras 
 
 Consulta entrada por `refcli` (ou `numeroNfe` como alias).
 
-Query params:
-- `refcli` (obrigatorio, quando `numeroNfe` nao for enviado)
-- `numeroNfe` (alias de `refcli`; use um ou outro)
-- `cgccli` (opcional; se enviado e nao existir cliente, retorna `422`)
+Tabela de parametros (`query`):
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `refcli` | string | Sim* | Referencia da entrada | `ENT-POSTMAN-123` | Obrigatorio quando `numeroNfe` nao for enviado |
+| `numeroNfe` | string | Sim* | Alias de `refcli` | `ENT-POSTMAN-123` | Obrigatorio quando `refcli` nao for enviado |
+| `cgccli` | string | Nao | CNPJ do cliente para filtrar por `NOCLI` | `00398268000123` | Se enviado: CNPJ valido; se nao existir cliente retorna `422` |
 
 Exemplo:
 
@@ -320,18 +344,35 @@ Exemplo de erro (`400 Bad Request`):
 
 Cria pedido de separacao.
 
-Campos obrigatorios em `pedidos[].identificacao`:
-- `numeropedido`
-- `cgccli` (CNPJ cliente)
-- `tipomovimentacao`
-- `destinatario.cnpj`
-- `destinatario.nome`
+Tabela `pedidos[].identificacao`:
 
-Campos obrigatorios em `pedidos[].itens[]`:
-- `nompro`
-- `qtd`
-- `vlrunit`
-- `total`
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `numeropedido` | string | Sim | Numero do pedido | `PED-API-10001` | Campo obrigatorio |
+| `cgccli` | string | Sim | CNPJ do cliente | `00398268000123` | CNPJ valido; cliente deve existir |
+| `tipomovimentacao` | string | Sim | Tipo da movimentacao | `SAIDA` | Campo obrigatorio; precisa existir na `TABOPOS` |
+| `nomecliente` | string | Nao | Nome do cliente | `POLIOTTO...` | Sem validacao de tamanho no endpoint |
+| `usuario` | string | Nao | Usuario de origem | `INTEGRACAO` | Opcional |
+| `obs` | string | Nao | Observacoes do pedido | `Pedido criado via integracao` | Opcional |
+| `destinatario.cnpj` | string | Sim | CNPJ do destinatario | `04700714000163` | CNPJ valido |
+| `destinatario.nome` | string | Sim | Nome do destinatario | `APM TERMINALS PORTUARIOS SA` | Campo obrigatorio |
+| `destinatario.ie` | string | Nao | Inscricao estadual do destinatario | `12345678` | Opcional |
+| `destinatario.endereco` | string | Nao | Endereco do destinatario | `Rua Exemplo 456` | Opcional |
+| `destinatario.numero` | string | Nao | Numero do endereco | `456` | Opcional |
+| `destinatario.complemento` | string | Nao | Complemento do endereco | `Galpao` | Opcional |
+| `destinatario.bairro` | string | Nao | Bairro | `Centro` | Opcional |
+| `destinatario.ibgecidade` | number | Nao | Codigo IBGE da cidade | `1200013` | Se enviado, deve mapear em `TABCID` |
+| `destinatario.cep` | string | Nao | CEP do destinatario | `88301365` | Opcional |
+
+Tabela `pedidos[].itens[]`:
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `nompro` | string | Sim | Descricao do item | `Produto Exemplo 1` | Campo obrigatorio |
+| `codcli` | string | Nao | SKU do item | `SKU-001` | Se enviado: string nao vazia |
+| `qtd` | number | Sim | Quantidade | `10` | Deve ser `> 0` |
+| `vlrunit` | number | Sim | Valor unitario | `25.5` | Deve ser `>= 0` |
+| `total` | number | Sim | Total do item | `255` | Deve ser `>= 0` e igual a `qtd * vlrunit` |
 
 Exemplo:
 
@@ -414,12 +455,13 @@ Exemplo de erro (`400 Bad Request`):
 
 Solicita cancelamento do pedido.
 
-Campos obrigatorios:
-- `identificacao.numeropedido`
-- `identificacao.cgccli`
+Tabela `pedido[].identificacao`:
 
-Campo opcional:
-- `identificacao.motivocancelamento`
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `numeropedido` | string | Sim | Numero do pedido a cancelar | `PED-API-10001` | Campo obrigatorio |
+| `cgccli` | string | Sim | CNPJ do cliente | `00398268000123` | CNPJ valido; cliente deve existir |
+| `motivocancelamento` | string | Nao | Motivo do cancelamento | `Cancelamento solicitado` | Opcional |
 
 Exemplo:
 
@@ -482,10 +524,13 @@ Regra importante:
 
 Atualiza status de separacao.
 
-Campos usados:
-- `identificacao.numeropedido`
-- `identificacao.cgccli`
-- `identificacao.statusseparacao`
+Tabela `pedido[].identificacao`:
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `numeropedido` | string | Sim | Numero do pedido | `PED-API-10001` | Necessario para localizar pedido |
+| `cgccli` | string | Sim | CNPJ do cliente | `00398268000123` | Cliente deve existir |
+| `statusseparacao` | string | Nao | Status da separacao | `concluido` | Endpoint aceita; valor e gravado em `STATUS` |
 
 Exemplo:
 
@@ -559,16 +604,29 @@ Exemplo de erro (`422 Unprocessable Entity`):
 
 Vincula faturamento ao pedido.
 
-Campos obrigatorios:
-- `identificacao.numeropedido`
-- `identificacao.volume` (numero)
-- `identificacao.pesoBruto` (numero)
+Tabela `pedido[].identificacao`:
 
-Campos recomendados:
-- `identificacao.cgccli`
-- `identificacao.pesoLiquido`
-- `identificacao.xmlnfe`
-- `identificacao.transportadora`
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `numeropedido` | string | Sim | Numero do pedido | `PED-API-10001` | Campo obrigatorio |
+| `cgccli` | string | Sim | CNPJ do cliente | `00398268000123` | Necessario para localizar cliente/pedido |
+| `volume` | number | Sim | Volume para conferencia | `1` | Campo obrigatorio; deve bater com separacao |
+| `pesoBruto` | number | Sim | Peso bruto para conferencia | `12.3` | Campo obrigatorio; deve bater com separacao |
+| `pesoLiquido` | number | Nao | Peso liquido para conferencia | `11.8` | Se enviado, deve bater com separacao |
+| `xmlnfe` | string | Nao | XML da NF-e (ou referencia) | `<nfe>xml-faturamento</nfe>` | Opcional |
+| `transporte` | string | Nao | Nome/descricao do transporte | `TRANSPORTADORA TESTE` | Opcional |
+| `transportadora` | object | Nao | Dados da transportadora | `{ "cnpj": "...", "nome": "..." }` | Opcional; pode ser usado para compor `transporte` |
+
+Tabela `pedido[].identificacao.transportadora`:
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `cnpj` | string | Nao | CNPJ da transportadora | `11259442000173` | Opcional |
+| `nome` | string | Nao | Nome da transportadora | `TRANSPORTADORA TESTE` | Opcional |
+| `ie` | string | Nao | Inscricao estadual | `12345678` | Opcional |
+| `endereco` | string | Nao | Endereco da transportadora | `Rua Transporte, 100` | Opcional |
+| `ibgecidade` | number | Nao | Codigo IBGE da cidade | `1200013` | Opcional |
+| `cep` | string | Nao | CEP da transportadora | `88301365` | Opcional |
 
 Exemplo:
 
