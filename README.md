@@ -411,12 +411,3 @@ Fluxo de entrada:
 2. (opcional) `POST /entradas/itens`
 3. (opcional) `PATCH /entradas/status`
 4. (opcional) `GET /entradas`
-
-## 7. Postman
-
-Collection pronta para consumo:
-- `docs/postman_collection_infocwb.json`
-
-Variaveis principais:
-- `base_url` = `http://mmsistemas.ddns.net:3111`
-- `token` = Bearer token valido
