@@ -61,6 +61,12 @@ Observacao:
 
 Sem autenticacao.
 
+Tabela de parametros (`query`):
+
+| Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
+|---|---|---|---|---|---|
+| `-` | - | Nao | Endpoint sem parametros de consulta | - | Nao se aplica |
+
 Exemplo de retorno:
 
 ```json
@@ -84,6 +90,7 @@ Tabela de campos (`body`):
 |---|---|---|---|---|---|
 | `nompro` | string | Sim | Nome do produto | `Produto Exemplo` | Obrigatorio, `1..120` |
 | `descricao` | string | Sim | Descricao completa | `Descricao completa do produto` | Obrigatorio, `1..600` |
+| `infadic` | string | Nao | Informacoes adicionais | `Descricao complementar` | Se informado: `1..500` |
 | `codcli` | string | Sim | SKU/codigo do cliente (chave de upsert) | `SKU-001` | Obrigatorio, `1..50` |
 | `nomun` | string | Sim | Unidade de medida | `UN` | Obrigatorio, `1..10` |
 | `barpro` | string | Nao | GTIN/EAN | `7891234567890` | Se enviado: 8/12/13/14 digitos |
@@ -104,6 +111,7 @@ Exemplo:
   "nompro": "Produto Exemplo",
   "barpro": "7891234567890",
   "descricao": "Descricao completa do produto",
+  "infadic": "Descricao complementar",
   "codcli": "SKU-001",
   "noncm": "12345678",
   "alt": 20,
@@ -170,6 +178,8 @@ Tabela `notas[].identificacao`
 | `cnpjcliente` | string | Sim | CNPJ do cliente | `00398268000123` | CNPJ valido (14 digitos) |
 | `nomecliente` | string | Sim | Nome do cliente | `POLIOTTO...` | Campo obrigatorio (nao vazio) |
 | `tipomovimentacao` | string | Sim | Tipo da movimentacao | `ENTRADA` | Campo obrigatorio; precisa existir na `TABOPOS` |
+| `processo` | string | Nao | Controle interno do cliente | `REF001` | Se informado: `1..100` |
+| `container` | string | Nao | Numero do container | `AAAA 123456-7` | Se informado: `1..13` |
 | `cnpjDestinatario` | string | Sim | CNPJ do armazem destino | `11259442000173` | CNPJ valido; precisa existir na `TABEMP` |
 
 Tabela `notas[].itens[]`
@@ -181,6 +191,7 @@ Tabela `notas[].itens[]`
 | `quantidade` | number | Sim | Quantidade do item | `10` | Deve ser `> 0` |
 | `valorUnitario` | number | Sim | Valor unitario | `25.5` | Deve ser `>= 0` |
 | `valorTotal` | number | Sim | Total do item | `255` | Deve ser `>= 0` e igual a `quantidade * valorUnitario` |
+| `unidadeMedida` | string | Sim | Unidade de medida do item | `UN` | Campo obrigatorio (nao vazio) |
 | `gtin` | string | Sim | GTIN/EAN do item | `7891234567890` | 8/12/13/14 digitos |
 | `pesoBruto` | number | Sim | Peso bruto do item (kg) | `5.2` | Deve ser `>= 0` |
 | `pesoLiquido` | number | Sim | Peso liquido do item (kg) | `5.0` | Deve ser `>= 0` |
@@ -201,6 +212,8 @@ Exemplo:
         "cnpjcliente": "00398268000123",
         "nomecliente": "POLIOTTO IMPORTACAO E EXPORTACAO DE PLASTICOS LTDA",
         "tipomovimentacao": "ENTRADA",
+        "processo": "REF001",
+        "container": "AAAA 123456-7",
         "cnpjDestinatario": "11259442000173",
         "usuario": "INTEGRACAO"
       },
@@ -615,14 +628,14 @@ Tabela `pedido[].identificacao`:
 | `pesoLiquido` | number | Nao | Peso liquido para conferencia | `11.8` | Se enviado, deve bater com separacao |
 | `xmlnfe` | string | Nao | XML da NF-e (ou referencia) | `<nfe>xml-faturamento</nfe>` | Opcional |
 | `transporte` | string | Nao | Nome/descricao do transporte | `TRANSPORTADORA TESTE` | Opcional |
-| `transportadora` | object | Nao | Dados da transportadora | `{ "cnpj": "...", "nome": "..." }` | Opcional; pode ser usado para compor `transporte` |
+| `transportadora` | object | Sim | Dados da transportadora | `{ "cnpj": "...", "nome": "..." }` | `cnpj` e `nome` obrigatorios |
 
 Tabela `pedido[].identificacao.transportadora`:
 
 | Campo | Tipo | Obrig. | Descricao | Exemplo | Validacao/Regras |
 |---|---|---|---|---|---|
-| `cnpj` | string | Nao | CNPJ da transportadora | `11259442000173` | Opcional |
-| `nome` | string | Nao | Nome da transportadora | `TRANSPORTADORA TESTE` | Opcional |
+| `cnpj` | string | Sim | CNPJ da transportadora | `11259442000173` | CNPJ valido |
+| `nome` | string | Sim | Nome da transportadora | `TRANSPORTADORA TESTE` | Campo obrigatorio |
 | `ie` | string | Nao | Inscricao estadual | `12345678` | Opcional |
 | `endereco` | string | Nao | Endereco da transportadora | `Rua Transporte, 100` | Opcional |
 | `ibgecidade` | number | Nao | Codigo IBGE da cidade | `1200013` | Opcional |
@@ -704,4 +717,6 @@ Fluxo de saida (pedido):
 
 Fluxo de entrada:
 1. `POST /entradas`
+2. (opcional) `POST /entradas/itens`
+3. (opcional) `PATCH /entradas/status`
 4. (opcional) `GET /entradas`
